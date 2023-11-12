@@ -1,6 +1,6 @@
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# __import__('pysqlite3')
+# import sys
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 # from dotenv import load_dotenv
 # load_dotenv()
@@ -14,10 +14,16 @@ from langchain.chains import RetrievalQA
 import streamlit as st
 import tempfile
 import os
+from streamlit_extras.buy_me_a_coffee import button
+
+button(username="quicknote", floating=True, width=220)
 
 #제목
 st.title("ChatPDF")
 st.write("---")
+
+#open ai key 입력 받기
+openai_key = st.text_input('OPEN_AI_API_KEY', type='password')
 
 #파일 업로드
 uploaded_file = st.file_uploader("pdf 파일을 올려주세요!", type=['pdf'])
@@ -52,7 +58,7 @@ if uploaded_file is not None:
     texts = text_splitter.split_documents(pages)
 
     #embeddings
-    embeddings_model = OpenAIEmbeddings()
+    embeddings_model = OpenAIEmbeddings(openai_api_key=openai_key)
     db = Chroma.from_documents(texts, embeddings_model)
 
     #question
@@ -61,7 +67,7 @@ if uploaded_file is not None:
     if st.button('질문하기'):
         with st.spinner("기다려봐"):
         #question = "주인공의 아내가 어떻게 됐어?"
-            llm = ChatOpenAI(model_name="gpt-4-1106-preview", temperature=0)
+            llm = ChatOpenAI(model_name="gpt-4-1106-preview", temperature=0, openai_api_key=openai_key)
         qa_chain = RetrievalQA.from_chain_type(llm,retriever=db.as_retriever())
         result = qa_chain({"query":question})
         st.write(result["result"])
